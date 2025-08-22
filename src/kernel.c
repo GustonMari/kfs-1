@@ -280,6 +280,13 @@ static const char scancode_to_ascii[128] = {
     // rest not handled for now
 };
 
+// Track whether each key is pressed
+static bool key_pressed[128] = {0};
+
+// Track modifier states
+static bool shift_pressed = false;
+static bool caps_lock = false;
+
 static inline uint8_t inb(uint16_t port) {
     uint8_t val;
     // input byte from port into register
@@ -293,32 +300,87 @@ static inline void outb(uint16_t port, uint8_t val) {
     __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
 }
 
-
 char keyboard_getchar(void) {
     uint8_t scancode = inb(0x60);
 
-    // check if it’s a release (bit 7 set)
-    if (scancode & 0x80) {
-        // key release
+    bool released = scancode & 0x80; // high bit = release
+    uint8_t key = scancode & 0x7F;   // remove release bit
+
+    // Update shift keys
+    if (key == 0x2A || key == 0x36) { // Left/Right Shift
+        shift_pressed = !released;
         return 0;
+    }
+
+    // Caps lock toggle
+    if (key == 0x3A && !released) {
+        caps_lock = !caps_lock;
+        return 0;
+    }
+
+    // Ignore repeated keys
+    if (released) {
+        key_pressed[key] = false;
+        return 0;
+    }
+
+    if (key_pressed[key]) return 0; // already pressed, ignore
+
+    key_pressed[key] = true;
+
+    // Special keys for switching screens
+    switch (scancode) {
+        case 0x3B: // F1
+            save_current_screen();
+            load_screen(0);
+            return 0;
+        case 0x3C: // F2
+            save_current_screen();
+            load_screen(1);
+            return 0;
+        case 0x3D: // F3
+            save_current_screen();
+            load_screen(2);
+            return 0;
+    }
+
+    char c = scancode_to_ascii[key];
+
+    // Apply shift/caps lock
+    if (c >= 'a' && c <= 'z') {
+        if (shift_pressed ^ caps_lock) {
+            c -= 32; // convert to uppercase
+        }
     } else {
-        switch (scancode) {
-            case 0x3B: // F1
-                save_current_screen();
-                load_screen(0);
-                return 0;
-            case 0x3C: // F2
-                save_current_screen();
-                load_screen(1);
-                return 0;
-            case 0x3D: // F3
-                save_current_screen();
-                load_screen(2);
-                return 0;
-            default:
-                return scancode_to_ascii[scancode];
+        // Handle shifted symbols
+        if (shift_pressed) {
+            switch (c) {
+                case '1': c = '!'; break;
+                case '2': c = '@'; break;
+                case '3': c = '#'; break;
+                case '4': c = '$'; break;
+                case '5': c = '%'; break;
+                case '6': c = '^'; break;
+                case '7': c = '&'; break;
+                case '8': c = '*'; break;
+                case '9': c = '('; break;
+                case '0': c = ')'; break;
+                case '-': c = '_'; break;
+                case '=': c = '+'; break;
+                case '[': c = '{'; break;
+                case ']': c = '}'; break;
+                case '\\': c = '|'; break;
+                case ';': c = ':'; break;
+                case '\'': c = '"'; break;
+                case ',': c = '<'; break;
+                case '.': c = '>'; break;
+                case '/': c = '?'; break;
+                case '`': c = '~'; break;
+            }
         }
     }
+
+    return c;
 }
 
 // ! ====================== Main ==========================
