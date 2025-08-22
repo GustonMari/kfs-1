@@ -7,25 +7,27 @@ CFLAGS = -std=gnu99 -ffreestanding -O2 -Wall -Wextra \
          -fno-builtin -fno-exceptions -fno-stack-protector \
          -fno-rtti -nostdlib -nodefaultlibs
 
-LDFLAGS = -T linker.ld -nostdlib
+LDFLAGS = -T src/linker.ld -nostdlib
+
+# Source folder
+SRC = src
 
 # Files
-OBJS = boot.o kernel.o
+OBJS = $(SRC)/boot.o $(SRC)/kernel.o
 
 # Output kernel
 KERNEL = gmary_ndormoy_os.bin
 
 all: $(KERNEL)
 
-boot.o: boot.s
-	$(AS) boot.s -o boot.o
+$(SRC)/boot.o: $(SRC)/boot.s
+	$(AS) $(SRC)/boot.s -o $(SRC)/boot.o
 
-kernel.o: kernel.c
-	$(CC) -c kernel.c -o kernel.o $(CFLAGS)
+$(SRC)/kernel.o: $(SRC)/kernel.c
+	$(CC) -c $(SRC)/kernel.c -o $(SRC)/kernel.o $(CFLAGS)
 
-
-$(KERNEL): $(OBJS) linker.ld
-	$(CC) -T linker.ld -o gmary_ndormoy_os.bin -ffreestanding -O2 -nostdlib $(OBJS) -lgcc
+$(KERNEL): $(OBJS) $(SRC)/linker.ld
+	$(CC) $(LDFLAGS) -o $(KERNEL) -ffreestanding -O2 -nostdlib $(OBJS) -lgcc
 
 # Verify if kernel is Multiboot compliant
 verify: $(KERNEL)
