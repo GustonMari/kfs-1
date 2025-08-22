@@ -331,18 +331,18 @@ void kernel_main(void)
 	/* Newline support is left as an exercise. */
 	terminal_writestring("42");
 
+    // testing the debug
+    printk("i need to test %d if its %s", 42, "Workinng");
     terminal_setcolor(vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
 	terminal_writestring("This is white on blue!\n");
     
-    // testing the debug
-    printk("i need to test %d if its %s", 42, "Workinng");
-
     while (1)
     {
-        char c = keyboard_getchar();
-        if (c)
-        {
-            terminal_putchar(c);
-        }
+        char c = 0;
+    
+        // wait until a key is pressed
+        while (!(c = keyboard_getchar()));
+    
+        terminal_putchar(c);
     }
 }
