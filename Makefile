@@ -4,8 +4,8 @@ AS = i686-elf-as
 
 # Compilation flags (from subject)
 CFLAGS = -std=gnu99 -ffreestanding -O2 -Wall -Wextra \
-         -fno-builtin -fno-exceptions -fno-stack-protector \
-         -fno-rtti -nostdlib -nodefaultlibs
+         -fno-builtin -fno-stack-protector \
+         -nostdlib -nodefaultlibs
 
 LDFLAGS = -T src/linker.ld -nostdlib
 
