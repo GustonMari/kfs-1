@@ -17,8 +17,62 @@ Bible:
 https://wiki.osdev.org/Bare_Bones
 Very Very nice documentation and schema:
 https://dev.to/yeganegholipour/building-my-first-kernel-understanding-bare-metal-operating-systems-bfg
-For keyboard input:
+## For keyboard input:
+https://wiki.osdev.org/I8042_PS/2_Controller +++++++
 https://wiki.osdev.org/PS/2_Keyboard
+https://www.basicinputoutput.com/2024/11/the-keyboard-controller-interface.html
+https://aeb.win.tue.nl/linux/kbd/scancodes-11.html
+IRQS:
+https://docs.kernel.org/core-api/irq/concepts.html
+
+1. Diagram of inb / outb
+
+Imagine your CPU, registers, and the keyboard controller port 0x60:
+
++-------------------+                       +---------------------------+
+|                   |                       |                           |
+|       CPU         |   inb 0x60 → AL       |  Keyboard Controller      |
+|                   | <-------------------  |  I/O Port 0x60 (1 byte)   |
+|   +-----------+   |                       |   Sends scancode          |
+|   |  AL (8b)  |   |                       |   e.g. 0x1E (A press)     |
+|   |  part of  |   |                       |   0x9E (A release)        |
+|   | EAX (32b) |   |                       |                           |
+|   +-----------+   |                       +---------------------------+
+|                   |
+|   +-----------+   |
+|   |   DX (16b)|   |  holds port number
+|   +-----------+   |
+|                   |
++-------------------+
+
+### Flow for inb:
+
+CPU takes the port number (e.g., 0x60) from DX (or immediate value).
+
+It executes inb %dx, %al.
+
+The keyboard controller puts the byte (scancode) on the bus.
+
+The CPU copies it into AL (low 8 bits of EAX).
+
+Inline assembly moves that into your C variable val.
+
+### Flow for outb:
+
+CPU loads the byte to send into AL.
+
+CPU executes outb %al, %dx.
+
+That byte goes to the I/O device listening at port DX (e.g., PIC at 0x20).
+
+
+EAX = full 32-bit register.
+
+AX = lower 16 bits of EAX.
+
+AL = lower 8 bits of AX (→ used for inb/outb).
+
+AH = upper 8 bits of AX
 
 
 ## GDT / IDT / PIC 

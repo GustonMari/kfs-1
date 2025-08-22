@@ -134,6 +134,27 @@ void terminal_writestring(const char* data)
 	terminal_write(data, strlen(data));
 }
 
+// ! ====================== Multi screen ==========================
+
+#define MAX_SCREENS 3
+uint16_t screens[MAX_SCREENS][VGA_WIDTH * VGA_HEIGHT];
+int current_screen = 0;
+
+void save_current_screen() {
+    for (size_t i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++) {
+        screens[current_screen][i] = terminal_buffer[i];
+    }
+}
+
+void load_screen(int n) {
+    for (size_t i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++) {
+        terminal_buffer[i] = screens[n][i];
+    }
+    current_screen = n;
+    terminal_row = 0;
+    terminal_column = 0;
+}
+
 // ! ====================== Debug functions ==========================
 
 void itoa(int value, char* buffer, int base) {
@@ -246,6 +267,60 @@ void printk(const char* format, ...) {
     va_end(args);
 }
 
+// ! ====================== Keyboard controller ==========================
+
+static const char scancode_to_ascii[128] = {
+    0,  27, '1','2','3','4','5','6','7','8','9','0','-','=', '\b', // 0x0E backspace
+    '\t','q','w','e','r','t','y','u','i','o','p','[',']','\n',     // 0x1C enter
+    0,   // control
+    'a','s','d','f','g','h','j','k','l',';','\'','`',
+    0,   // left shift
+    '\\','z','x','c','v','b','n','m',',','.','/', 0, // right shift
+    '*', 0, ' ', // space
+    // rest not handled for now
+};
+
+static inline uint8_t inb(uint16_t port) {
+    uint8_t val;
+    // input byte from port into register
+    __asm__ volatile ("inb %1, %0" : "=a"(val) : "Nd"(port));
+    return val;
+}
+
+// send End Of Interrupt (EOI) to the PIC.
+static inline void outb(uint16_t port, uint8_t val) {
+    // so you introduce volatile to prevent caching
+    __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
+}
+
+
+char keyboard_getchar(void) {
+    uint8_t scancode = inb(0x60);
+
+    // check if it’s a release (bit 7 set)
+    if (scancode & 0x80) {
+        // key release
+        return 0;
+    } else {
+        switch (scancode) {
+            case 0x3B: // F1
+                save_current_screen();
+                load_screen(0);
+                return 0;
+            case 0x3C: // F2
+                save_current_screen();
+                load_screen(1);
+                return 0;
+            case 0x3D: // F3
+                save_current_screen();
+                load_screen(2);
+                return 0;
+            default:
+                return scancode_to_ascii[scancode];
+        }
+    }
+}
+
 // ! ====================== Main ==========================
 
 void kernel_main(void) 
@@ -261,4 +336,13 @@ void kernel_main(void)
     
     // testing the debug
     printk("i need to test %d if its %s", 42, "Workinng")
+
+    while (1)
+    {
+        char c = keyboard_getchar();
+        if (c)
+        {
+            terminal_putchar(c);
+        }
+    }
 }
