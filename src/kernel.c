@@ -335,7 +335,7 @@ void kernel_main(void)
 	terminal_writestring("This is white on blue!\n");
     
     // testing the debug
-    printk("i need to test %d if its %s", 42, "Workinng")
+    printk("i need to test %d if its %s", 42, "Workinng");
 
     while (1)
     {
