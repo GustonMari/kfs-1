@@ -303,11 +303,12 @@ static inline void outb(uint16_t port, uint8_t val) {
 char keyboard_getchar(void) {
     uint8_t scancode = inb(0x60);
 
-    bool released = scancode & 0x80; // high bit = release
-    uint8_t key = scancode & 0x7F;   // remove release bit
+    // Bit 7 (the highest bit) is the “release bit.” If it’s 1, the key was released. If it’s 0, the key was pressed.
+    bool released = scancode & 0x80; // high bit = release, 0x80 = 128 = 1000 0000
+    uint8_t key = scancode & 0x7F;   // remove release bit, 0x7F = 127 = 0111 1111
 
-    // Update shift keys
-    if (key == 0x2A || key == 0x36) { // Left/Right Shift
+    // Update shift keys (lef / right shift)
+    if (key == 0x2A || key == 0x36) {
         shift_pressed = !released;
         return 0;
     }
@@ -346,8 +347,8 @@ char keyboard_getchar(void) {
 
     char c = scancode_to_ascii[key];
 
-    // Apply shift/caps lock
     if (c >= 'a' && c <= 'z') {
+        // bitwise XOR
         if (shift_pressed ^ caps_lock) {
             c -= 32; // convert to uppercase
         }
@@ -394,9 +395,9 @@ void kernel_main(void)
 	terminal_writestring("42");
 
     // testing the debug
-    printk("i need to test %d if its %s", 42, "Workinng");
-    terminal_setcolor(vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
-	terminal_writestring("This is white on blue!\n");
+    //printk("i need to test %d if its %s", 42, "Workinng");
+    //terminal_setcolor(vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
+	//terminal_writestring("This is white on blue!\n");
     
     while (1)
     {

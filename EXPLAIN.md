@@ -19,6 +19,7 @@ Very Very nice documentation and schema:
 https://dev.to/yeganegholipour/building-my-first-kernel-understanding-bare-metal-operating-systems-bfg
 ## For keyboard input:
 https://wiki.osdev.org/I8042_PS/2_Controller +++++++
++++++ scancode just here:
 https://wiki.osdev.org/PS/2_Keyboard
 https://www.basicinputoutput.com/2024/11/the-keyboard-controller-interface.html
 https://aeb.win.tue.nl/linux/kbd/scancodes-11.html
@@ -167,7 +168,6 @@ Make a build directory for GCC and configure it:
 mkdir build-gcc
 cd build-gcc
 
-# BECAREFULL im very not sure i stop the process make all-gcc because it was very slow i relaunch it with make -j 4 all-gcc has 4 core
 
 ../gcc-13.2.0/configure --target=i686-elf --prefix=/usr/local/cross --disable-nls --enable-languages=c --without-headers
 # becarefull make it multithreaded here 4 cores
