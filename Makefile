@@ -21,40 +21,40 @@ KERNEL = gmary_ndormoy_os.bin
 all: $(KERNEL)
 
 $(SRC)/boot.o: $(SRC)/boot.s
-	$(AS) $(SRC)/boot.s -o $(SRC)/boot.o
+    $(AS) $(SRC)/boot.s -o $(SRC)/boot.o
 
 $(SRC)/kernel.o: $(SRC)/kernel.c
-	$(CC) -c $(SRC)/kernel.c -o $(SRC)/kernel.o $(CFLAGS)
+    $(CC) -c $(SRC)/kernel.c -o $(SRC)/kernel.o $(CFLAGS)
 
 $(KERNEL): $(OBJS) $(SRC)/linker.ld
-	$(CC) $(LDFLAGS) -o $(KERNEL) -ffreestanding -O2 -nostdlib $(OBJS) -lgcc
+    $(CC) $(LDFLAGS) -o $(KERNEL) -ffreestanding -O2 -nostdlib $(OBJS) -lgcc
 
 # Verify if kernel is Multiboot compliant
 verify: $(KERNEL)
-	@if grub-file --is-x86-multiboot $(KERNEL); then \
-		echo "Multiboot confirmed"; \
-	else \
-		echo "The file is not Multiboot!"; \
-		exit 1; \
-	fi
+    @if grub-file --is-x86-multiboot $(KERNEL); then \
+        echo "Multiboot confirmed"; \
+    else \
+        echo "The file is not Multiboot!"; \
+        exit 1; \
+    fi
 
 # Create an ISO with GRUB so QEMU/VirtualBox can boot it
 iso: $(KERNEL)
-	mkdir -p iso/boot/grub
-	cp $(KERNEL) iso/boot/
-	echo 'set timeout=0' > iso/boot/grub/grub.cfg
-	echo 'set default=0' >> iso/boot/grub/grub.cfg
-	echo 'menuentry "gmary_ndormoy_os" {' >> iso/boot/grub/grub.cfg
-	echo '  multiboot /boot/$(KERNEL)' >> iso/boot/grub/grub.cfg
-	echo '  boot' >> iso/boot/grub/grub.cfg
-	echo '}' >> iso/boot/grub/grub.cfg
-	grub-mkrescue -o gmary_ndormoy_os.iso iso
+    mkdir -p iso/boot/grub
+    cp $(KERNEL) iso/boot/
+    echo 'set timeout=0' > iso/boot/grub/grub.cfg
+    echo 'set default=0' >> iso/boot/grub/grub.cfg
+    echo 'menuentry "gmary_ndormoy_os" {' >> iso/boot/grub/grub.cfg
+    echo '  multiboot /boot/$(KERNEL)' >> iso/boot/grub/grub.cfg
+    echo '  boot' >> iso/boot/grub/grub.cfg
+    echo '}' >> iso/boot/grub/grub.cfg
+    grub-mkrescue -o gmary_ndormoy_os.iso iso/ --compress=xz
 
 # Run in QEMU
 run: iso
-	qemu-system-i386 -cdrom gmary_ndormoy_os.iso
+    qemu-system-i386 -cdrom gmary_ndormoy_os.iso
 
 # Clean
 clean:
-	rm -f $(OBJS) $(KERNEL)
-	rm -rf iso gmary_ndormoy_os.iso
+    rm -f $(OBJS) $(KERNEL)
+    rm -rf iso gmary_ndormoy_os.iso
